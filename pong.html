@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Пинг-понг артиста — Единственные самые высокие деревья на Земле</title>
+<meta name="description" content="Отбивай проблемы, которые сыплются на артистов на гастролях.">
+<meta property="og:title" content="Пинг-понг артиста — игра"><meta property="og:description" content="Отбивай проблемы, которые сыплются на артистов на гастролях.">
+<meta property="og:image" content="https://thetallesttrees.com/og/og_games.jpg"><meta name="twitter:card" content="summary_large_image">
+<style>
+:root{--ink:#07141f;--paper:#eaf2f8;--pa:rgba(234,242,248,.5);--red:#8a1426;--sky:#a3d2f2;--sky2:#6aaee2;--cob:#4b8fd6;--gut:16px;--rule:2px solid var(--ink)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:clip}
+body{color:var(--ink);font:400 16px/1.45 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+ background:linear-gradient(180deg,var(--sky) 0,var(--sky2) 60vh,var(--cob) 100%) fixed;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:0 var(--gut) 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;border-bottom:var(--rule);white-space:nowrap}
+.top a,.top button{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:inherit;font:500 12px/1 inherit;font-family:inherit;letter-spacing:.07em;text-transform:uppercase;background:none;border:0;padding:0;cursor:pointer}
+.top .r{display:flex;gap:16px}
+h1{font-weight:400;font-size:clamp(34px,8vw,52px);line-height:.95;letter-spacing:-.02em;margin:20px 0 10px;text-transform:uppercase}
+.how{font-size:16px;line-height:1.45;border-left:4px solid var(--ink);padding-left:12px;margin:0 0 14px;max-width:36em}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 16px;border:var(--rule);background:var(--pa);color:var(--ink);font:500 13px/1.15 inherit;font-family:inherit;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.row .btn{flex:1 1 150px}
+canvas{display:block;width:auto;max-width:100%;max-height:calc(100svh - 150px);margin:0 auto;height:auto;border:var(--rule);touch-action:none;background:#cfe6f7}
+.ctrl{display:grid;gap:8px;margin-top:8px}
+.ctrl button{min-height:64px;font-size:14px;touch-action:none}
+.over{border:var(--rule);background:var(--paper);margin-top:12px;padding:16px}
+.over .go{display:block;font:500 clamp(40px,11vw,64px)/.9 inherit;font-family:inherit;letter-spacing:-.02em;margin-bottom:8px}
+.over p{margin:6px 0 0;font-size:17px}
+.tickets{margin-top:28px;border-top:var(--rule);padding-top:10px;display:flex;justify-content:space-between;gap:12px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+@media (max-width:700px){
+ body.ingame{overflow:hidden;position:fixed;inset:0;width:100%}
+ body.ingame .wrap{height:100svh;display:flex;flex-direction:column;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+ body.ingame h1,body.ingame .how,body.ingame .tickets,body.ingame .start,body.played .start{display:none}
+ body.ingame .stagewrap{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding-top:8px}
+ body.ingame canvas{max-height:calc(100svh - 56px - 96px);width:auto;max-width:100%;margin:0 auto}
+}
+body.ingame .start,body.played .start{display:none}
+@media (max-width:700px){body.ingame .row.bottom,body.ingame .hsh,body.ingame #hsb{display:none}}
+
+.stagewrap{scroll-margin-top:10px}.sharenow{width:100%;margin-top:8px;min-height:48px}@media (max-width:700px){body.ingame .sharenow{min-height:40px;margin-top:6px;font-size:12px}body.ingame canvas{max-height:calc(100svh - 56px - 96px - 46px)!important}}.keys{margin:0 0 10px;border:2px solid var(--ink);background:var(--paper);padding:10px 14px;font-size:14px;line-height:1.9;letter-spacing:.03em;text-transform:uppercase}
+.keys kbd{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 7px;margin:0 6px 0 0;border:2px solid var(--ink);border-bottom-width:4px;background:#fff;font:500 14px/1 inherit;font-family:inherit}
+.keys i{font-style:normal;margin-right:16px;white-space:nowrap;display:inline-block}
+.keys .km{display:none}
+@media (hover:none),(max-width:700px){.keys .kd{display:none}.keys .km{display:inline}.keys{font-size:13px;padding:6px 10px}body.ingame .keys{display:none}}
+.hs{border:2px solid #07141f;background:rgba(234,242,248,.85);margin-top:12px;padding:12px 14px;color:#07141f;text-align:left}
+.hs-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px solid #07141f;padding-bottom:6px;margin-bottom:6px;font-size:13px;letter-spacing:.07em;text-transform:uppercase}
+.hs-h b{font-weight:500}.hs-h span{opacity:.7}
+.hs-list{list-style:none;margin:0;padding:0;font-size:16px}
+.hs-list li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:5px 0;border-bottom:1px solid rgba(7,20,31,.15)}
+.hs-list li:last-child{border-bottom:0}.hs-list li.me{background:#07141f;color:#eaf2f8;padding-left:6px;padding-right:6px}
+.hs-n{opacity:.6}.hs-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hs-s{font-variant-numeric:tabular-nums;font-weight:500}
+.hs-form label{display:block;font-weight:500;font-size:17px;margin-bottom:8px}
+.hs-row{display:flex;gap:8px}.hs-row input{flex:1;min-width:0;min-height:52px;border:2px solid #07141f;background:#fff;padding:0 12px;font:500 17px/1 inherit;font-family:inherit;color:#07141f;border-radius:0}
+.hs-row .btn{flex:0 0 auto;min-height:52px}
+.hs-empty,.hs-note,.hs-ok{margin:6px 0;font-size:14px}.hs-ok{font-weight:500}
+.hsboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 12px}
+.hsboard>.hs-note{grid-column:1/-1}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="games">← Все игры</a><span class="r"><button id="mute">♪ Звук</button><a href="./">На сайт ↗</a></span></div>
+  <h1>Пинг-понг артиста</h1>
+  <div class="how">Твоя доска — «Спектакль» внизу. Сверху «Жизнь» подкидывает проблемы — иногда они раздваиваются. Золотой шарик — хорошая новость: +5 и панель шире. Лови капсулы «ШИРЕ», «ТИШЕ», «+ЖИЗНЬ», уворачивайся от «УЖЕ». Упустил все шарики — минус жизнь.</div>
+  <div class="start"><button class="btn primary" id="startbtn" style="width:100%;min-height:64px;font-size:16px;justify-content:space-between;padding:0 24px">Начать игру <span>→</span></button></div>
+  <div class="stagewrap">
+    <div class="keys"><span class="kd"><i><kbd>←</kbd><kbd>→</kbd>двигать панель</i><i><kbd>мышь</kbd>тоже можно</i></span><span class="km">Палец по полю — двигать панель</span></div>
+    <canvas id="c" width="600" height="820"></canvas>
+    <button class="btn sharenow" id="sharenow" type="button">Поделиться игрой ↗</button>
+  </div>
+  <div id="over"></div>
+  <h2 class="hsh" style="font-weight:400;text-transform:uppercase;font-size:28px;margin:32px 0 0">Рекорды</h2><div class="hsboard" id="hsb"></div>
+  <div class="row bottom"><a class="btn primary" href="./#tour">Купить билет на спектакль</a><a class="btn" href="games">Все игры</a></div>
+  <div class="tickets"><span>Единственные самые высокие деревья на Земле</span><span>Январь 2027</span></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+/* tiny chiptune */
+const Music=(()=>{let ac,mg,on=true,timer,step=0,nt=0,tempo=140,playing=false;try{on=localStorage.getItem('trees_sound')!=='off'}catch(e){}
+ const N=n=>n?440*Math.pow(2,(n-69)/12):0;
+ const L=[72,74,76,79,81,79,76,74,72,72,74,76,74,0,0,0,76,77,79,84,83,81,79,76,77,76,74,71,72,0,79,0],B=[48,55,48,55,53,60,53,60,45,52,45,52,43,50,43,50,48,55,48,55,53,60,53,60,43,50,43,47,48,55,48,0];
+ function init(){if(ac)return;const C=window.AudioContext||window.webkitAudioContext;if(!C)return;ac=new C();mg=ac.createGain();mg.gain.value=on?.14:0;mg.connect(ac.destination)}
+ function tone(f,t,d,ty,v){if(!f)return;const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(mg);o.start(t);o.stop(t+d+.02)}
+ function sch(){const s=60/tempo/2;while(nt<ac.currentTime+.12){const i=step%32;tone(N(L[i]),nt,s*.9,'square',.2);tone(N(B[i]),nt,s*.95,'triangle',.45);nt+=s;step++}}
+ return{start(t){init();if(!ac)return;if(ac.state==='suspended')ac.resume();if(t)tempo=t;if(playing)return;playing=true;step=0;nt=ac.currentTime+.05;timer=setInterval(sch,25)},
+  stop(){playing=false;clearInterval(timer)},tempo(t){tempo=t},
+  sfx(k){init();if(!ac||!on)return;const t=ac.currentTime;const q={hit:[[660,.05]],wall:[[330,.04]],point:[[523,.07],[784,.1]],lose:[[392,.15],[330,.15],[262,.4]],eat:[[784,.05],[1047,.08]],punch:[[180,.06]],kick:[[120,.08]],block:[[900,.03]],special:[[523,.05],[659,.05],[784,.05],[1047,.12]],ko:[[196,.2],[147,.2],[98,.6]],win:[[523,.1],[659,.1],[784,.1],[1047,.3]]}[k]||[];let x=t;q.forEach(([f,d])=>{tone(f,x,d+.02,k==='kick'||k==='punch'?'triangle':'square',.3);x+=d})},
+  toggle(){on=!on;try{localStorage.setItem('trees_sound',on?'on':'off')}catch(e){}if(mg)mg.gain.value=on?.14:0;return on},isOn:()=>on}})();
+const mb=$('#mute');const pm=()=>mb.textContent=Music.isOn()?'♪ Звук':'♪ Без звука';pm();mb.onclick=()=>{Music.toggle();pm()};
+function share(text){const url=location.href.split('#')[0];if(navigator.share)navigator.share({text,url}).catch(()=>{});else{try{navigator.clipboard.writeText(text+' '+url);$('#sharenow').textContent='✓ Ссылка скопирована';setTimeout(()=>$('#sharenow').textContent='Поделиться игрой ↗',2500)}catch(e){prompt('Скопируйте ссылку',url)}}}
+$('#sharenow').onclick=()=>share('Отбей проблемы артистов — «Пинг-понг артиста»:');
+function gameOver(title,text,shareText,head,score){Music.stop();Music.sfx(head?'win':'lose');document.body.classList.remove('ingame');document.body.classList.add('played');
+ $('#over').innerHTML=`<div class="over"><span class="go">${head||'GAME OVER'}</span><b style="font-weight:500;text-transform:uppercase;font-size:20px">${title}</b><p>${text}</p>
+ <div id="hsbox"></div><div class="row"><button class="btn primary" id="again">↻ Играть снова</button><button class="btn" id="sh2">Поделиться игрой</button><a class="btn" href="./#tour">Купить билет</a></div></div>`;
+ $('#again').onclick=()=>{ $('#over').innerHTML=''; begin(); }; $('#sh2').onclick=()=>share(shareText);HS.show($('#hsbox'),'pong',score); $('#over').scrollIntoView({behavior:'smooth'});}
+function begin(){document.body.classList.add('ingame');if(innerWidth<=700)window.scrollTo(0,0);else setTimeout(()=>$('.stagewrap').scrollIntoView({block:'start',behavior:'smooth'}),30);$('#over').innerHTML='';Music.start(140);Game.start()}
+$('#startbtn').onclick=begin;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){Music.stop();(typeof Game!=='undefined')&&Game.pause&&Game.pause()}});
+window.addEventListener('blur',()=>{Music.stop();(typeof Game!=='undefined')&&Game.pause&&Game.pause()});
+document.addEventListener('touchmove',e=>{if(document.body.classList.contains('ingame')&&innerWidth<=700)e.preventDefault()},{passive:false});
+/* Общая таблица рекордов. Сервер: /api/scores (Vercel или Netlify + Upstash Redis). Если сервера нет — таблица этого устройства. */
+const HS=(()=>{
+  const API='/api/scores',N=10;
+  const NAMES={suitcase:'Чемодан эмигранта',run:'Бегство',producer:'Продюсер в изгнании',fight:'Театральный бой',snake:'Змейка гастролей',pong:'Пинг-понг артиста'};
+  const UNIT={suitcase:'рядов',run:'км',producer:'дней',pong:'проблем',snake:'городов',fight:'очков'};
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const lsGet=g=>{try{return JSON.parse(localStorage.getItem('trees_hs_'+g)||'[]')}catch(e){return[]}};
+  const lsPut=(g,a)=>{try{localStorage.setItem('trees_hs_'+g,JSON.stringify(a.slice(0,N)))}catch(e){}};
+  let online=null;
+  async function top(game,n=N){try{const r=await fetch(`${API}?game=${game}&n=${n}`,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();online=true;return j.scores||[]}catch(e){online=false;return lsGet(game).slice(0,n)}}
+  async function all(n=5){try{const r=await fetch(`${API}?game=all&n=${n}`,{cache:'no-store'});if(!r.ok)throw 0;online=true;return (await r.json()).games}catch(e){online=false;const o={};for(const g in NAMES)o[g]=lsGet(g).slice(0,n);return o}}
+  async function post(game,name,score){
+    const loc=lsGet(game);loc.push({name,score,t:Date.now()});loc.sort((a,b)=>b.score-a.score);lsPut(game,loc);
+    try{const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({game,name,score})});if(!r.ok)throw 0;return true}catch(e){return false}}
+  function table(list,hl){if(!list.length)return '<p class="hs-empty">Пока никого. Будь первым.</p>';
+    return '<ol class="hs-list">'+list.map((s,i)=>`<li class="${hl&&s.name===hl.name&&s.score===hl.score?'me':''}"><span class="hs-n">${i+1}</span><span class="hs-name">${esc(s.name)}</span><span class="hs-s">${s.score}</span></li>`).join('')+'</ol>'}
+  // блок в окне Game Over
+  async function show(el,game,score){if(!el)return;score=Math.floor(+score||0);
+    el.innerHTML=`<div class="hs"><div class="hs-h"><b>Рекорды</b><span>${UNIT[game]||''}</span></div><div class="hs-body"><p class="hs-empty">Загружаем…</p></div></div>`;
+    const body=el.querySelector('.hs-body');let list=await top(game);
+    const qualifies=score>0&&(list.length<N||score>list[list.length-1].score);
+    const foot=()=>online?'':'<p class="hs-note">Сейчас показаны рекорды этого устройства.</p>';
+    if(!qualifies){body.innerHTML=table(list)+foot();return}
+    let saved='';try{saved=localStorage.getItem('trees_hs_name')||''}catch(e){}
+    body.innerHTML=`<form class="hs-form"><label for="hsname">Новый рекорд — ${score}! Впиши имя</label><div class="hs-row"><input id="hsname" maxlength="16" autocomplete="nickname" enterkeyhint="done" placeholder="Твоё имя" value="${esc(saved)}"><button class="btn primary" type="submit">Записать</button></div></form>`+table(list)+foot();
+    const f=body.querySelector('form'),inp=f.querySelector('input');setTimeout(()=>{try{inp.focus({preventScroll:true})}catch(e){}},400);
+    f.onsubmit=async e=>{e.preventDefault();const name=inp.value.trim().replace(/\s+/g,' ').slice(0,16);if(!name){inp.focus();return}
+      try{localStorage.setItem('trees_hs_name',name)}catch(e){}f.querySelector('button').disabled=true;f.querySelector('button').textContent='…';
+      await post(game,name,score);list=await top(game);body.innerHTML=`<p class="hs-ok">Записано: ${esc(name)} — ${score}</p>`+table(list,{name,score})+foot()};}
+  // сводная таблица всех игр
+  async function board(el,games,n=5){if(!el)return;const o=await all(n);
+    el.innerHTML=(games||Object.keys(NAMES)).map(g=>`<div class="hs"><div class="hs-h"><b>${NAMES[g]}</b><span>${UNIT[g]}</span></div>${table(o[g]||[])}</div>`).join('')+(online?'':'<p class="hs-note">Сейчас показаны рекорды этого устройства.</p>')}
+  return{show,board,top};
+})();
+
+HS.board($('#hsb'),['pong'],10);
+const Game=(()=>{
+  const cv=$('#c'),g=cv.getContext('2d'),W=600,H=820;
+  const PROB=['Забыл текст','Виза отказана','Рейс отменили','Пропали декорации','Сорвал голос','Гонорар не пришёл','Зал отказал','Много мата','Репортаж НТВ','Новый статус','Температура 38','Паспорт дома','Шенген кончился','Забастовка','Свет проспал','Парик не влез','Критик ушёл в антракте','Перевес 400 €','Поезда не ходят','25 новых спектаклей','Иноагент','Отменили в Европе','Субтитры отстали','Зритель кричит','Хостел на 11 коек','Трамп что-то сказал','Локдаун','Ваза разбилась'];
+  const GOLD=['Аншлаг','Овация','Хорошая рецензия','Продали все билеты','Грант'];
+  // капсулы: good — лови, bad — уворачивайся
+  const CAPS=[{k:'wide',t:'ШИРЕ',good:1},{k:'slow',t:'ТИШЕ',good:1},{k:'life',t:'+ЖИЗНЬ',good:1},{k:'narrow',t:'УЖЕ',good:0},{k:'wide',t:'ШИРЕ',good:1}];
+  const BR=12,MAXL=3,PY=H-60,AY=76,PH=16,BASEW=130;
+  let px,ax,pw,wideT,slowT,balls,caps,score,lives,run=false,raf,lastT,flash=0,paused=false,note='',noteT=0,last='';
+  const rp=()=>PROB[Math.floor(Math.random()*PROB.length)];
+  function mkBall(x,y,a,dir,spd){const gold=score>=4&&Math.random()<.12;return{x,y,spd,vx:Math.sin(a)*spd,vy:Math.cos(a)*spd*dir,gold,prob:gold?GOLD[Math.floor(Math.random()*GOLD.length)]:rp()}}
+  function serve(){balls.push(mkBall(W/2,H*0.35,Math.random()*.8-.4,1,Math.min(11,6.5+score*0.12)))}
+  function start(){px=W/2;ax=W/2;pw=BASEW;wideT=0;slowT=0;balls=[];caps=[];score=0;lives=MAXL;paused=false;serve();run=true;lastT=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+  function pause(){if(run){run=false;paused=true;draw();txt('ПАУЗА',W/2,H/2-30,40,'center',500);txt('нажмите на поле',W/2,H/2+4,16,'center')}}
+  function resume(){if(paused){paused=false;run=true;lastT=0;Music.start(140);raf=requestAnimationFrame(loop);return true}return false}
+  function say(s,c){note=s;noteT=80}
+  function bounce(b,paddleX,w,down){const off=Math.max(-1,Math.min(1,(b.x-paddleX)/(w/2)));b.spd=Math.min(14,b.spd+0.3);const ang=off*1.0;b.vx=Math.sin(ang)*b.spd;b.vy=Math.cos(ang)*b.spd*(down?1:-1)}
+  function split(b){const n=score>12?2:1;for(let i=0;i<n;i++){const a=(Math.random()-.5)*1.2;const nb={...b,prob:rp(),gold:false};nb.vx=Math.sin(a)*b.spd;nb.vy=Math.abs(Math.cos(a)*b.spd);balls.push(nb)}say(n>1?'ПРОБЛЕМА РАСТРОИЛАСЬ!':'ПРОБЛЕМА РАЗДВОИЛАСЬ!');Music.sfx('special')}
+  function loop(t){if(!run)return;const dt=lastT?Math.min(2,(t-lastT)/16.67):1;lastT=t;
+    if(wideT>0){wideT-=dt;if(wideT<=0)pw=BASEW}if(slowT>0)slowT-=dt;
+    const k=slowT>0?.6:1;
+    if(keys.L)px-=12*dt;if(keys.R)px+=12*dt;px=Math.max(pw/2,Math.min(W-pw/2,px));
+    // ИИ («Жизнь») следит за ближайшим шариком, летящим к нему
+    const up=balls.filter(b=>b.vy<0).sort((a,b)=>a.y-b.y)[0];const aiSpeed=4.2+Math.min(3,score*0.1);
+    const target=up?up.x:W/2;ax+=Math.max(-aiSpeed,Math.min(aiSpeed,(target-ax)*.12))*dt;ax=Math.max(BASEW/2,Math.min(W-BASEW/2,ax));
+    for(const b of balls){const py0=b.y;b.x+=b.vx*dt*k;b.y+=b.vy*dt*k;
+      if(b.x<BR){b.x=BR;b.vx=Math.abs(b.vx);Music.sfx('wall')}if(b.x>W-BR){b.x=W-BR;b.vx=-Math.abs(b.vx);Music.sfx('wall')}
+      if(b.vy>0&&py0+BR<=PY+2&&b.y+BR>=PY&&Math.abs(b.x-px)<=pw/2+BR){b.y=PY-BR;bounce(b,px,pw,false);flash=12;
+        if(b.gold){score+=5;say(`${b.prob.toUpperCase()}! +5`);Music.sfx('point');pw=Math.min(240,BASEW*1.6);wideT=600;b.gold=false;b.prob=rp()}else{score++;Music.sfx('hit')}
+        if(Math.random()<.2)caps.push({...CAPS[Math.floor(Math.random()*CAPS.length)],x:60+Math.random()*(W-120),y:AY+30})}
+      if(b.vy<0&&py0-BR>=AY+PH-2&&b.y-BR<=AY+PH&&Math.abs(b.x-ax)<=BASEW/2+BR){b.y=AY+PH+BR;bounce(b,ax,BASEW,true);if(!b.gold)b.prob=rp();Music.sfx('hit');
+        if(score>=3&&balls.length<4&&Math.random()<.18)split(b)}
+      if(b.y>H+BR){b.dead=true;last=b.prob}
+      if(b.y<-BR){b.dead=true;score+=2;say('ЖИЗНЬ ПРОМАХНУЛАСЬ  +2');Music.sfx('point')}}
+    const lost=balls.some(b=>b.dead&&b.y>H);balls=balls.filter(b=>!b.dead);
+    if(!balls.length){if(lost){lives--;Music.sfx('lose');if(lives<=0){run=false;draw();return gameOver(`Отбито проблем: ${score}`,`Последней не удалось отбить «${last.toLowerCase()}». Спектакль всё равно состоится.`,`Я отбил ${score} проблем в «Пинг-понге артиста». Попробуй больше:`,null,score)}say('ПРОПУЩЕНО: '+last.toUpperCase())}serve()}
+    // капсулы
+    for(const c of caps){c.y+=3.2*dt;if(c.y+14>=PY&&c.y-14<=PY+PH&&Math.abs(c.x-px)<=pw/2+30){c.dead=true;
+        if(c.k==='wide'){pw=Math.min(240,BASEW*1.6);wideT=600;say('ПАНЕЛЬ ШИРЕ!')}
+        if(c.k==='narrow'){pw=BASEW*.65;wideT=420;say('ПАНЕЛЬ УЖЕ…')}
+        if(c.k==='slow'){slowT=420;say('ПРОБЛЕМЫ ПОМЕДЛЕННЕЕ')}
+        if(c.k==='life'){lives=Math.min(5,lives+1);say('+1 ЖИЗНЬ')}
+        Music.sfx(c.good?'eat':'wall')}
+      if(c.y>H+20)c.dead=true}
+    caps=caps.filter(c=>!c.dead);
+    draw();raf=requestAnimationFrame(loop)}
+  function txt(s,x,y,size,al='left',w=400,c='#07141f'){g.fillStyle=c;g.font=`${w} ${size}px Helvetica Neue,Helvetica,Arial`;g.textAlign=al;g.fillText(s,x,y);g.textAlign='left'}
+  function draw(){
+    const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#a3d2f2');bg.addColorStop(1,'#4b8fd6');g.fillStyle=bg;g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(7,20,31,.35)';g.setLineDash([10,10]);g.lineWidth=2;g.beginPath();g.moveTo(0,H/2);g.lineTo(W,H/2);g.stroke();g.setLineDash([]);
+    g.fillStyle='#07141f';g.fillRect(ax-BASEW/2,AY,BASEW,PH);txt('ЖИЗНЬ',ax,AY-8,14,'center',500);
+    g.fillStyle=flash>0?'#eaf2f8':(wideT>0&&pw>BASEW?'#8a1426':'#07141f');g.fillRect(px-pw/2,PY,pw,PH);g.strokeStyle='#07141f';g.lineWidth=2;g.strokeRect(px-pw/2,PY,pw,PH);txt('СПЕКТАКЛЬ',px,H-28,14,'center',500);if(flash>0)flash--;
+    // капсулы
+    caps.forEach(c=>{g.font='600 14px Helvetica Neue,Arial';const w=g.measureText(c.t).width+22;g.fillStyle=c.good?'#eaf2f8':'#07141f';g.beginPath();g.roundRect?g.roundRect(c.x-w/2,c.y-14,w,28,14):g.rect(c.x-w/2,c.y-14,w,28);g.fill();g.strokeStyle='#07141f';g.stroke();txt(c.t,c.x,c.y+5,14,'center',600,c.good?'#07141f':'#eaf2f8')});
+    // шарики с подписями
+    balls.forEach(b=>{g.fillStyle=b.gold?'#e9c24a':'#8a1426';g.beginPath();g.arc(b.x,b.y,b.gold?BR+3:BR,0,7);g.fill();if(b.gold){g.strokeStyle='#07141f';g.lineWidth=2;g.stroke()}
+      const s=b.prob.toUpperCase();g.font='500 14px Helvetica Neue,Arial';const tw=g.measureText(s).width+14;const lx=Math.max(4,Math.min(W-tw-4,b.x-tw/2)),ly=b.y+(b.vy>0?-36:22);
+      g.fillStyle=b.gold?'#e9c24a':'#07141f';g.fillRect(lx,ly,tw,22);txt(s,lx+7,ly+16,14,'left',500,b.gold?'#07141f':'#eaf2f8')});
+    txt(`ОТБИТО: ${score}`,16,H/2-12,18,'left',500);txt(`ЖИЗНИ: ${'●'.repeat(Math.max(0,lives))}`,W-16,H/2-12,18,'right',500);
+    let st=[];if(wideT>0)st.push(pw>BASEW?'ШИРЕ':'УЖЕ');if(slowT>0)st.push('ТИШЕ');if(balls.length>1)st.push(`ПРОБЛЕМ: ${balls.length}`);if(st.length)txt(st.join(' · '),W/2,H/2+30,18,'center',600,'rgba(7,20,31,.6)');
+    if(noteT>0){noteT--;txt(note,W/2,H/2-60,22,'center',600,'#8a1426')}
+  }
+  const keys={};
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){keys.L=1;e.preventDefault()}if(e.key==='ArrowRight'){keys.R=1;e.preventDefault()}if(resume())e.preventDefault()});
+  document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys.L=0;if(e.key==='ArrowRight')keys.R=0});
+  const mv=e=>{const r=cv.getBoundingClientRect();px=(e.clientX-r.left)/r.width*W};
+  cv.addEventListener('pointerdown',e=>{if(resume())return;cv.setPointerCapture(e.pointerId);mv(e)});
+  cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'||e.buttons)mv(e)});
+  px=W/2;ax=W/2;pw=BASEW;wideT=0;slowT=0;caps=[];score=0;lives=MAXL;balls=[{x:W/2,y:H/2,vx:0,vy:1,prob:rp()}];
+  draw();txt('ОТБИВАЙ ПРОБЛЕМЫ',W/2,H/2-70,36,'center',500);
+  return{start,pause,_s:()=>({balls,caps,score,lives,pw})};
+})();
+
+</script>
+</body>
+</html>

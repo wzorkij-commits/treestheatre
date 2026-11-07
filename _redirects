@@ -1,0 +1,5 @@
+/games      /games.html   200
+/play/*     /play/:splat.html  200
+/pong      /pong.html   200
+/snake      /snake.html   200
+/fight      /fight.html   200

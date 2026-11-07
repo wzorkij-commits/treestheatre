@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Змейка гастролей — Единственные самые высокие деревья на Земле</title>
+<meta name="description" content="Вези спектакль по городам и не упрись в границу.">
+<meta property="og:title" content="Змейка гастролей — игра"><meta property="og:description" content="Вези спектакль по городам и не упрись в границу.">
+<meta property="og:image" content="https://thetallesttrees.com/og/og_games.jpg"><meta name="twitter:card" content="summary_large_image">
+<style>
+:root{--ink:#07141f;--paper:#eaf2f8;--pa:rgba(234,242,248,.5);--red:#8a1426;--sky:#a3d2f2;--sky2:#6aaee2;--cob:#4b8fd6;--gut:16px;--rule:2px solid var(--ink)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;overflow-x:clip}
+body{color:var(--ink);font:400 16px/1.45 "Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;
+ background:linear-gradient(180deg,var(--sky) 0,var(--sky2) 60vh,var(--cob) 100%) fixed;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:0 var(--gut) 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;border-bottom:var(--rule);white-space:nowrap}
+.top a,.top button{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:inherit;font:500 12px/1 inherit;font-family:inherit;letter-spacing:.07em;text-transform:uppercase;background:none;border:0;padding:0;cursor:pointer}
+.top .r{display:flex;gap:16px}
+h1{font-weight:400;font-size:clamp(34px,8vw,52px);line-height:.95;letter-spacing:-.02em;margin:20px 0 10px;text-transform:uppercase}
+.how{font-size:16px;line-height:1.45;border-left:4px solid var(--ink);padding-left:12px;margin:0 0 14px;max-width:36em}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 16px;border:var(--rule);background:var(--pa);color:var(--ink);font:500 13px/1.15 inherit;font-family:inherit;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.row .btn{flex:1 1 150px}
+canvas{display:block;width:auto;max-width:100%;max-height:calc(100svh - 150px);margin:0 auto;height:auto;border:var(--rule);touch-action:none;background:#cfe6f7}
+.ctrl{display:grid;gap:8px;margin-top:8px}
+.ctrl button{min-height:64px;font-size:14px;touch-action:none}
+.over{border:var(--rule);background:var(--paper);margin-top:12px;padding:16px}
+.over .go{display:block;font:500 clamp(40px,11vw,64px)/.9 inherit;font-family:inherit;letter-spacing:-.02em;margin-bottom:8px}
+.over p{margin:6px 0 0;font-size:17px}
+.tickets{margin-top:28px;border-top:var(--rule);padding-top:10px;display:flex;justify-content:space-between;gap:12px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+@media (max-width:700px){
+ body.ingame{overflow:hidden;position:fixed;inset:0;width:100%}
+ body.ingame .wrap{height:100svh;display:flex;flex-direction:column;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+ body.ingame h1,body.ingame .how,body.ingame .tickets,body.ingame .start,body.played .start{display:none}
+ body.ingame .stagewrap{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding-top:8px}
+ body.ingame canvas{max-height:calc(100svh - 56px - 96px);width:auto;max-width:100%;margin:0 auto}
+}
+body.ingame .start,body.played .start{display:none}
+@media (max-width:700px){body.ingame .row.bottom,body.ingame .hsh,body.ingame #hsb{display:none}}
+
+.stagewrap{scroll-margin-top:10px}.sharenow{width:100%;margin-top:8px;min-height:48px}@media (max-width:700px){body.ingame .sharenow{min-height:40px;margin-top:6px;font-size:12px}body.ingame canvas{max-height:calc(100svh - 56px - 96px - 46px)!important}}.keys{margin:0 0 10px;border:2px solid var(--ink);background:var(--paper);padding:10px 14px;font-size:14px;line-height:1.9;letter-spacing:.03em;text-transform:uppercase}
+.keys kbd{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 7px;margin:0 6px 0 0;border:2px solid var(--ink);border-bottom-width:4px;background:#fff;font:500 14px/1 inherit;font-family:inherit}
+.keys i{font-style:normal;margin-right:16px;white-space:nowrap;display:inline-block}
+.keys .km{display:none}
+@media (hover:none),(max-width:700px){.keys .kd{display:none}.keys .km{display:inline}.keys{font-size:13px;padding:6px 10px}body.ingame .keys{display:none}}
+.hs{border:2px solid #07141f;background:rgba(234,242,248,.85);margin-top:12px;padding:12px 14px;color:#07141f;text-align:left}
+.hs-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px solid #07141f;padding-bottom:6px;margin-bottom:6px;font-size:13px;letter-spacing:.07em;text-transform:uppercase}
+.hs-h b{font-weight:500}.hs-h span{opacity:.7}
+.hs-list{list-style:none;margin:0;padding:0;font-size:16px}
+.hs-list li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:5px 0;border-bottom:1px solid rgba(7,20,31,.15)}
+.hs-list li:last-child{border-bottom:0}.hs-list li.me{background:#07141f;color:#eaf2f8;padding-left:6px;padding-right:6px}
+.hs-n{opacity:.6}.hs-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hs-s{font-variant-numeric:tabular-nums;font-weight:500}
+.hs-form label{display:block;font-weight:500;font-size:17px;margin-bottom:8px}
+.hs-row{display:flex;gap:8px}.hs-row input{flex:1;min-width:0;min-height:52px;border:2px solid #07141f;background:#fff;padding:0 12px;font:500 17px/1 inherit;font-family:inherit;color:#07141f;border-radius:0}
+.hs-row .btn{flex:0 0 auto;min-height:52px}
+.hs-empty,.hs-note,.hs-ok{margin:6px 0;font-size:14px}.hs-ok{font-weight:500}
+.hsboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 12px}
+.hsboard>.hs-note{grid-column:1/-1}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="games">← Все игры</a><span class="r"><button id="mute">♪ Звук</button><a href="./">На сайт ↗</a></span></div>
+  <h1>Змейка гастролей</h1>
+  <div class="how">Вези спектакль по городам. Каждый город — плюс человек в команде и новая граница на карте. Не врежься в границу, край карты и собственный хвост.</div>
+  <div class="start"><button class="btn primary" id="startbtn" style="width:100%;min-height:64px;font-size:16px;justify-content:space-between;padding:0 24px">Начать игру <span>→</span></button></div>
+  <div class="stagewrap">
+    <div class="keys"><span class="kd"><i><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd>поворот</i></span><span class="km">Свайп или кнопки — поворот</span></div>
+    <canvas id="c" width="600" height="860"></canvas><div class="ctrl" style="grid-template-columns:repeat(4,1fr)"><button class="btn" data-d="L">←</button><button class="btn" data-d="U">↑</button><button class="btn" data-d="D">↓</button><button class="btn" data-d="R">→</button></div>
+    <button class="btn sharenow" id="sharenow" type="button">Поделиться игрой ↗</button>
+  </div>
+  <div id="over"></div>
+  <h2 class="hsh" style="font-weight:400;text-transform:uppercase;font-size:28px;margin:32px 0 0">Рекорды</h2><div class="hsboard" id="hsb"></div>
+  <div class="row bottom"><a class="btn primary" href="./#tour">Купить билет на спектакль</a><a class="btn" href="games">Все игры</a></div>
+  <div class="tickets"><span>Единственные самые высокие деревья на Земле</span><span>Январь 2027</span></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+/* tiny chiptune */
+const Music=(()=>{let ac,mg,on=true,timer,step=0,nt=0,tempo=140,playing=false;try{on=localStorage.getItem('trees_sound')!=='off'}catch(e){}
+ const N=n=>n?440*Math.pow(2,(n-69)/12):0;
+ const L=[72,74,76,79,81,79,76,74,72,72,74,76,74,0,0,0,76,77,79,84,83,81,79,76,77,76,74,71,72,0,79,0],B=[48,55,48,55,53,60,53,60,45,52,45,52,43,50,43,50,48,55,48,55,53,60,53,60,43,50,43,47,48,55,48,0];
+ function init(){if(ac)return;const C=window.AudioContext||window.webkitAudioContext;if(!C)return;ac=new C();mg=ac.createGain();mg.gain.value=on?.14:0;mg.connect(ac.destination)}
+ function tone(f,t,d,ty,v){if(!f)return;const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(mg);o.start(t);o.stop(t+d+.02)}
+ function sch(){const s=60/tempo/2;while(nt<ac.currentTime+.12){const i=step%32;tone(N(L[i]),nt,s*.9,'square',.2);tone(N(B[i]),nt,s*.95,'triangle',.45);nt+=s;step++}}
+ return{start(t){init();if(!ac)return;if(ac.state==='suspended')ac.resume();if(t)tempo=t;if(playing)return;playing=true;step=0;nt=ac.currentTime+.05;timer=setInterval(sch,25)},
+  stop(){playing=false;clearInterval(timer)},tempo(t){tempo=t},
+  sfx(k){init();if(!ac||!on)return;const t=ac.currentTime;const q={hit:[[660,.05]],wall:[[330,.04]],point:[[523,.07],[784,.1]],lose:[[392,.15],[330,.15],[262,.4]],eat:[[784,.05],[1047,.08]],punch:[[180,.06]],kick:[[120,.08]],block:[[900,.03]],special:[[523,.05],[659,.05],[784,.05],[1047,.12]],ko:[[196,.2],[147,.2],[98,.6]],win:[[523,.1],[659,.1],[784,.1],[1047,.3]]}[k]||[];let x=t;q.forEach(([f,d])=>{tone(f,x,d+.02,k==='kick'||k==='punch'?'triangle':'square',.3);x+=d})},
+  toggle(){on=!on;try{localStorage.setItem('trees_sound',on?'on':'off')}catch(e){}if(mg)mg.gain.value=on?.14:0;return on},isOn:()=>on}})();
+const mb=$('#mute');const pm=()=>mb.textContent=Music.isOn()?'♪ Звук':'♪ Без звука';pm();mb.onclick=()=>{Music.toggle();pm()};
+function share(text){const url=location.href.split('#')[0];if(navigator.share)navigator.share({text,url}).catch(()=>{});else{try{navigator.clipboard.writeText(text+' '+url);$('#sharenow').textContent='✓ Ссылка скопирована';setTimeout(()=>$('#sharenow').textContent='Поделиться игрой ↗',2500)}catch(e){prompt('Скопируйте ссылку',url)}}}
+$('#sharenow').onclick=()=>share('Объедь как можно больше городов — «Змейка гастролей»:');
+function gameOver(title,text,shareText,head,score){Music.stop();Music.sfx(head?'win':'lose');document.body.classList.remove('ingame');document.body.classList.add('played');
+ $('#over').innerHTML=`<div class="over"><span class="go">${head||'GAME OVER'}</span><b style="font-weight:500;text-transform:uppercase;font-size:20px">${title}</b><p>${text}</p>
+ <div id="hsbox"></div><div class="row"><button class="btn primary" id="again">↻ Играть снова</button><button class="btn" id="sh2">Поделиться игрой</button><a class="btn" href="./#tour">Купить билет</a></div></div>`;
+ $('#again').onclick=()=>{ $('#over').innerHTML=''; begin(); }; $('#sh2').onclick=()=>share(shareText);HS.show($('#hsbox'),'snake',score); $('#over').scrollIntoView({behavior:'smooth'});}
+function begin(){document.body.classList.add('ingame');if(innerWidth<=700)window.scrollTo(0,0);else setTimeout(()=>$('.stagewrap').scrollIntoView({block:'start',behavior:'smooth'}),30);$('#over').innerHTML='';Music.start(150);Game.start()}
+$('#startbtn').onclick=begin;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){Music.stop();(typeof Game!=='undefined')&&Game.pause&&Game.pause()}});
+window.addEventListener('blur',()=>{Music.stop();(typeof Game!=='undefined')&&Game.pause&&Game.pause()});
+document.addEventListener('touchmove',e=>{if(document.body.classList.contains('ingame')&&innerWidth<=700)e.preventDefault()},{passive:false});
+/* Общая таблица рекордов. Сервер: /api/scores (Vercel или Netlify + Upstash Redis). Если сервера нет — таблица этого устройства. */
+const HS=(()=>{
+  const API='/api/scores',N=10;
+  const NAMES={suitcase:'Чемодан эмигранта',run:'Бегство',producer:'Продюсер в изгнании',fight:'Театральный бой',snake:'Змейка гастролей',pong:'Пинг-понг артиста'};
+  const UNIT={suitcase:'рядов',run:'км',producer:'дней',pong:'проблем',snake:'городов',fight:'очков'};
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const lsGet=g=>{try{return JSON.parse(localStorage.getItem('trees_hs_'+g)||'[]')}catch(e){return[]}};
+  const lsPut=(g,a)=>{try{localStorage.setItem('trees_hs_'+g,JSON.stringify(a.slice(0,N)))}catch(e){}};
+  let online=null;
+  async function top(game,n=N){try{const r=await fetch(`${API}?game=${game}&n=${n}`,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();online=true;return j.scores||[]}catch(e){online=false;return lsGet(game).slice(0,n)}}
+  async function all(n=5){try{const r=await fetch(`${API}?game=all&n=${n}`,{cache:'no-store'});if(!r.ok)throw 0;online=true;return (await r.json()).games}catch(e){online=false;const o={};for(const g in NAMES)o[g]=lsGet(g).slice(0,n);return o}}
+  async function post(game,name,score){
+    const loc=lsGet(game);loc.push({name,score,t:Date.now()});loc.sort((a,b)=>b.score-a.score);lsPut(game,loc);
+    try{const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({game,name,score})});if(!r.ok)throw 0;return true}catch(e){return false}}
+  function table(list,hl){if(!list.length)return '<p class="hs-empty">Пока никого. Будь первым.</p>';
+    return '<ol class="hs-list">'+list.map((s,i)=>`<li class="${hl&&s.name===hl.name&&s.score===hl.score?'me':''}"><span class="hs-n">${i+1}</span><span class="hs-name">${esc(s.name)}</span><span class="hs-s">${s.score}</span></li>`).join('')+'</ol>'}
+  // блок в окне Game Over
+  async function show(el,game,score){if(!el)return;score=Math.floor(+score||0);
+    el.innerHTML=`<div class="hs"><div class="hs-h"><b>Рекорды</b><span>${UNIT[game]||''}</span></div><div class="hs-body"><p class="hs-empty">Загружаем…</p></div></div>`;
+    const body=el.querySelector('.hs-body');let list=await top(game);
+    const qualifies=score>0&&(list.length<N||score>list[list.length-1].score);
+    const foot=()=>online?'':'<p class="hs-note">Сейчас показаны рекорды этого устройства.</p>';
+    if(!qualifies){body.innerHTML=table(list)+foot();return}
+    let saved='';try{saved=localStorage.getItem('trees_hs_name')||''}catch(e){}
+    body.innerHTML=`<form class="hs-form"><label for="hsname">Новый рекорд — ${score}! Впиши имя</label><div class="hs-row"><input id="hsname" maxlength="16" autocomplete="nickname" enterkeyhint="done" placeholder="Твоё имя" value="${esc(saved)}"><button class="btn primary" type="submit">Записать</button></div></form>`+table(list)+foot();
+    const f=body.querySelector('form'),inp=f.querySelector('input');setTimeout(()=>{try{inp.focus({preventScroll:true})}catch(e){}},400);
+    f.onsubmit=async e=>{e.preventDefault();const name=inp.value.trim().replace(/\s+/g,' ').slice(0,16);if(!name){inp.focus();return}
+      try{localStorage.setItem('trees_hs_name',name)}catch(e){}f.querySelector('button').disabled=true;f.querySelector('button').textContent='…';
+      await post(game,name,score);list=await top(game);body.innerHTML=`<p class="hs-ok">Записано: ${esc(name)} — ${score}</p>`+table(list,{name,score})+foot()};}
+  // сводная таблица всех игр
+  async function board(el,games,n=5){if(!el)return;const o=await all(n);
+    el.innerHTML=(games||Object.keys(NAMES)).map(g=>`<div class="hs"><div class="hs-h"><b>${NAMES[g]}</b><span>${UNIT[g]}</span></div>${table(o[g]||[])}</div>`).join('')+(online?'':'<p class="hs-note">Сейчас показаны рекорды этого устройства.</p>')}
+  return{show,board,top};
+})();
+
+HS.board($('#hsb'),['snake'],10);
+const Game=(()=>{
+  const cv=$('#c'),g=cv.getContext('2d'),C=15,R=20,Z=40,W=C*Z,H=R*Z+60;
+  const CITIES=[['Рига','18.01'],['Прага','19.01'],['Цюрих','20.01'],['Лимасол','23.01'],['Амстердам','25.01'],['Лондон'],['Тбилиси'],['Ереван'],['Берлин'],['Париж'],['Тель-Авив'],['Белград'],['Варшава'],['Вильнюс'],['Нью-Йорк'],['Дубай'],['Барселона'],['Хельсинки'],['Бишкек'],['Алматы']];
+  const CREW=['Чулпан','Машкова','Зоркий','Мишин','Вырыпаев','Волков','Маркво','Полубояринов','Гогенко','Бородинова','Ендрасик','Ия','Аля','Стефания','Арина','Ася','Саша','Маша','Аня','Катя','Лиза','Соня','Даша','Оля','Таня','Лена','Миша','Ваня','Петя','Дима','Женя','Полина','Наташа','Света','Юля','Лёша','Костя','Вера','Надя','Люба']
+  const BORDERS=['ГРАНИЦА','ВИЗА','ШЕНГЕН','ТАМОЖНЯ','РКН','ПЕРЕВЕС'];
+  let snake,dir,nd,food,walls,ci,tick,acc,run=false,raf,lastT,paused=false,score;
+  function free(){ for(let k=0;k<500;k++){ const x=Math.floor(Math.random()*C),y=Math.floor(Math.random()*R); if(!snake.some(s=>s.x===x&&s.y===y)&&!walls.some(w=>w.x===x&&w.y===y)&&!(food&&food.x===x&&food.y===y)&&Math.abs(x-snake[0].x)+Math.abs(y-snake[0].y)>3) return {x,y}; } return {x:0,y:0}; }
+  function start(){ snake=[{x:7,y:12,n:'Спектакль'},{x:7,y:13,n:CREW[0]},{x:7,y:14,n:CREW[1]},{x:7,y:15,n:CREW[2]}]; dir={x:0,y:-1}; nd=dir; walls=[]; ci=0; score=0; food=null; food={...free(),c:CITIES[0]}; tick=190; acc=0; run=true; paused=false; lastT=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
+  function pause(){ if(run){ run=false; paused=true; draw(); g.fillStyle='rgba(234,242,248,.9)'; g.fillRect(W/2-150,H/2-60,300,110); txt('ПАУЗА',W/2,H/2-6,40,'center',500); txt('нажмите или стрелку',W/2,H/2+28,16,'center'); } }
+  function resume(){ if(paused){ paused=false; run=true; lastT=0; Music.start(150); raf=requestAnimationFrame(loop); return true; } return false; }
+  function step(){
+    if(nd.x!==-dir.x||nd.y!==-dir.y) dir=nd;
+    const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y,n:'Спектакль'};
+    const hitW=walls.find(w=>w.x===h.x&&w.y===h.y);
+    if(h.x<0||h.y<0||h.x>=C||h.y>=R) return die('Спектакль выехал за край карты');
+    if(hitW) return die(`Спектакль упёрся в «${hitW.t.toLowerCase()}»`);
+    if(snake.some(s=>s.x===h.x&&s.y===h.y)) return die('Спектакль наехал сам на себя. Так бывает в турне');
+    snake.unshift(h);
+    if(h.x===food.x&&h.y===food.y){ score++; Music.sfx('eat');
+      ci++; food={...free(),c:CITIES[ci%CITIES.length]}; walls.push({...free(),t:BORDERS[Math.floor(Math.random()*BORDERS.length)]}); tick=Math.max(85,tick-7); Music.tempo(150+score*4); }
+    else snake.pop();
+    // relabel body with crew
+    snake.forEach((s,i)=>{ if(i>0) s.n=CREW[(i-1)%CREW.length]; });
+  }
+  function die(why){ run=false; draw(); g.fillStyle='rgba(234,242,248,.92)'; g.fillRect(40,H/2-70,W-80,120); txt('GAME OVER',W/2,H/2-14,44,'center',500); txt(`Городов: ${score}`,W/2,H/2+22,18,'center');
+    gameOver(`Городов в туре: ${score}`,`${why}. Последний город — ${CITIES[(ci)%CITIES.length][0]}.`,`Мой спектакль объехал ${score} городов в «Змейке гастролей». Сможешь больше?`,null,score); }
+  function loop(t){ if(!run) return; const dt=lastT?Math.min(100,t-lastT):16; lastT=t; acc+=dt; while(acc>=tick&&run){ acc-=tick; step(); } if(run) draw(); raf=requestAnimationFrame(loop); }
+  function txt(s,x,y,size,al='left',w=400,c='#07141f'){ g.fillStyle=c; g.font=`${w} ${size}px Helvetica Neue,Helvetica,Arial`; g.textAlign=al; g.fillText(s,x,y); g.textAlign='left'; }
+  function draw(){
+    const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#a3d2f2'); bg.addColorStop(1,'#4b8fd6'); g.fillStyle=bg; g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(7,20,31,.08)'; g.lineWidth=1; for(let x=0;x<=C;x++){g.beginPath();g.moveTo(x*Z,60);g.lineTo(x*Z,H);g.stroke()} for(let y=0;y<=R;y++){g.beginPath();g.moveTo(0,60+y*Z);g.lineTo(W,60+y*Z);g.stroke()}
+    g.fillStyle='#07141f'; g.fillRect(0,58,W,2);
+    txt(`ГОРОДОВ: ${score}`,16,38,20,'left',500); const nc=food.c; txt(`СЛЕДУЮЩИЙ: ${nc[0].toUpperCase()}${nc[1]?' · '+nc[1]:''}`,W-16,38,18,'right',500);
+    // walls
+    walls.forEach(w=>{ g.fillStyle='#07141f'; g.fillRect(w.x*Z+2,60+w.y*Z+2,Z-4,Z-4); g.font='600 8px Helvetica Neue,Arial'; g.fillStyle='#eaf2f8'; g.textAlign='center'; g.fillText(w.t,w.x*Z+Z/2,60+w.y*Z+Z/2+3); g.textAlign='left'; });
+    // food = city pin
+    const fx=food.x*Z+Z/2, fy=60+food.y*Z+Z/2; g.fillStyle='#8a1426'; g.beginPath(); g.arc(fx,fy-4,12,0,7); g.fill(); g.beginPath(); g.moveTo(fx-9,fy+2); g.lineTo(fx+9,fy+2); g.lineTo(fx,fy+16); g.fill(); g.fillStyle='#eaf2f8'; g.beginPath(); g.arc(fx,fy-4,4,0,7); g.fill();
+    g.font='500 13px Helvetica Neue,Arial'; const lw=g.measureText(food.c[0]).width+10; let lx=Math.max(2,Math.min(W-lw-2,fx-lw/2)); g.fillStyle='#07141f'; g.fillRect(lx,fy-38,lw,18); txt(food.c[0],lx+5,fy-24,13,'left',500,'#eaf2f8');
+    // snake
+    snake.forEach((s,i)=>{ const x=s.x*Z,y=60+s.y*Z;
+      if(i===0){ g.fillStyle='#07141f'; g.fillRect(x+1,y+1,Z-2,Z-2); g.fillStyle='#eaf2f8'; g.fillRect(x+6,y+8,Z-12,10); g.fillStyle='#07141f'; g.font='700 9px Helvetica Neue,Arial'; g.textAlign='center'; g.fillText('ТУР',x+Z/2,y+16); g.fillStyle='#e9c24a'; g.beginPath(); g.arc(x+10,y+Z-7,4,0,7); g.arc(x+Z-10,y+Z-7,4,0,7); g.fill(); g.textAlign='left'; }
+      else { g.fillStyle=i%2?'#eaf2f8':'#cfe3f5'; g.fillRect(x+3,y+3,Z-6,Z-6); g.strokeStyle='#07141f'; g.lineWidth=2; g.strokeRect(x+3,y+3,Z-6,Z-6); g.fillStyle='#07141f'; g.textAlign='center'; let nm=s.n||''; let fs=9; g.font=`600 ${fs}px Helvetica Neue,Arial`; while(g.measureText(nm).width>Z-8&&fs>6){fs-=.5; g.font=`600 ${fs}px Helvetica Neue,Arial`;} if(g.measureText(nm).width>Z-8) nm=nm.slice(0,6)+'.'; g.fillText(nm,x+Z/2,y+Z/2+3); g.textAlign='left'; }
+    });
+  }
+  const set=(x,y)=>{ if(resume()) return; nd={x,y}; };
+  document.addEventListener('keydown',e=>{ const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(m){ e.preventDefault(); set(...m); } });
+  let sx,sy; cv.addEventListener('pointerdown',e=>{ if(resume()) return; sx=e.clientX; sy=e.clientY; });
+  cv.addEventListener('pointerup',e=>{ if(sx==null) return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; if(Math.max(Math.abs(dx),Math.abs(dy))<20) return; if(Math.abs(dx)>Math.abs(dy)) set(dx>0?1:-1,0); else set(0,dy>0?1:-1); });
+  document.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('pointerdown',e=>{ e.preventDefault(); const m={U:[0,-1],D:[0,1],L:[-1,0],R:[1,0]}[b.dataset.d]; set(...m); }));
+  snake=[{x:7,y:12,n:'Спектакль'},{x:7,y:13,n:'Чулпан'},{x:7,y:14,n:'Машкова'},{x:7,y:15,n:'Зоркий'}]; walls=[]; food={x:7,y:5,c:CITIES[0]}; score=0; draw();
+  return {start,pause};
+})();
+
+</script>
+</body>
+</html>
