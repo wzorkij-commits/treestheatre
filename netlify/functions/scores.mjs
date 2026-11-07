@@ -1,6 +1,7 @@
 // Ядро таблицы рекордов: хранение в Upstash Redis через REST (без npm-зависимостей).
 const GAMES={suitcase:2000,run:100000,producer:3000,pong:5000,snake:400,fight:100000}; // максимум, выше — явный чит
-function env(){const e=process.env;return{url:e.KV_REST_API_URL||e.UPSTASH_REDIS_REST_URL,token:e.KV_REST_API_TOKEN||e.UPSTASH_REDIS_REST_TOKEN,admin:e.HS_ADMIN_TOKEN}}
+const clean=v=>String(v||'').trim().replace(/^[A-Z_]+\s*=\s*/,'').replace(/^["']|["']$/g,'').trim(); // терпим вставку целой строки KEY="value"
+function env(){const e=process.env;return{url:clean(e.KV_REST_API_URL||e.UPSTASH_REDIS_REST_URL),token:clean(e.KV_REST_API_TOKEN||e.UPSTASH_REDIS_REST_TOKEN),admin:clean(e.HS_ADMIN_TOKEN)}}
 async function redis(cmds){const {url,token}=env();if(!url||!token)throw new Error('no-db');
   const r=await fetch(url.replace(/\/$/,'')+'/pipeline',{method:'POST',headers:{Authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(cmds)});
   if(!r.ok)throw new Error('db '+r.status);return (await r.json()).map(x=>x.result)}
