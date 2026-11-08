@@ -65,7 +65,7 @@ body.ingame .start,body.played .start{display:none}
 <div class="wrap">
   <div class="top"><a href="games">← Все игры</a><span class="r"><button id="mute">♪ Звук</button><a href="./">На сайт ↗</a></span></div>
   <h1>Змейка гастролей</h1>
-  <div class="how">Вези спектакль по городам. Каждый город — плюс человек в команде и новая граница на карте. Не врежься в границу, край карты и собственный хвост.</div>
+  <div class="how">Вези спектакль по городам. Каждый город — плюс человек в команде и новая граница на карте. Граница сначала мигает, а через несколько городов открывается. Первые 10 городов края карты открыты — выезжаешь с другой стороны. С 10-го города карту обносят стеной, и это длится 20 городов. Дальше каждые 10 городов поле сужается на клетку с каждой стороны: цены поднялись, забастовка театров, ремонт дорог. Перед каждым уровнем игра встаёт на паузу и показывает схему. Каждые 15 городов на 20 секунд появляется «Солд-аут» — сразу +3 города.</div>
   <div class="start"><button class="btn primary" id="startbtn" style="width:100%;min-height:64px;font-size:16px;justify-content:space-between;padding:0 24px">Начать игру <span>→</span></button></div>
   <div class="stagewrap">
     <div class="keys"><span class="kd"><i><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd>поворот</i></span><span class="km">Свайп или кнопки — поворот</span></div>
@@ -143,36 +143,121 @@ const Game=(()=>{
   const CITIES=[['Рига','18.01'],['Прага','19.01'],['Цюрих','20.01'],['Лимасол','23.01'],['Амстердам','25.01'],['Лондон'],['Тбилиси'],['Ереван'],['Берлин'],['Париж'],['Тель-Авив'],['Белград'],['Варшава'],['Вильнюс'],['Нью-Йорк'],['Дубай'],['Барселона'],['Хельсинки'],['Бишкек'],['Алматы']];
   const CREW=['Чулпан','Машкова','Зоркий','Мишин','Вырыпаев','Волков','Маркво','Полубояринов','Гогенко','Бородинова','Ендрасик','Ия','Аля','Стефания','Арина','Ася','Саша','Маша','Аня','Катя','Лиза','Соня','Даша','Оля','Таня','Лена','Миша','Ваня','Петя','Дима','Женя','Полина','Наташа','Света','Юля','Лёша','Костя','Вера','Надя','Люба']
   const BORDERS=['ГРАНИЦА','ВИЗА','ШЕНГЕН','ТАМОЖНЯ','РКН','ПЕРЕВЕС'];
-  let snake,dir,nd,food,walls,ci,tick,acc,run=false,raf,lastT,paused=false,score;
-  function free(){ for(let k=0;k<500;k++){ const x=Math.floor(Math.random()*C),y=Math.floor(Math.random()*R); if(!snake.some(s=>s.x===x&&s.y===y)&&!walls.some(w=>w.x===x&&w.y===y)&&!(food&&food.x===x&&food.y===y)&&Math.abs(x-snake[0].x)+Math.abs(y-snake[0].y)>3) return {x,y}; } return {x:0,y:0}; }
-  function start(){ snake=[{x:7,y:12,n:'Спектакль'},{x:7,y:13,n:CREW[0]},{x:7,y:14,n:CREW[1]},{x:7,y:15,n:CREW[2]}]; dir={x:0,y:-1}; nd=dir; walls=[]; ci=0; score=0; food=null; food={...free(),c:CITIES[0]}; tick=190; acc=0; run=true; paused=false; lastT=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
+  let snake,dir,nd,q=[],food,walls,ci,tick,acc,run=false,raf,lastT,paused=false,score,steps=0,border='open',borderAt=0,bonus=null,bonusN=0,grow=0,banner='',bannerT=0;
+  const LEVEL2=10, BONUS_EVERY=15, BONUS_MS=20000;
+  let level=1, fixed=[];
+  const LEVELS=[null,'МИР БЕЗ ГРАНИЦ','ГРАНИЦЫ ЗАКРЫЛИ','ЦЕНЫ ПОДНЯЛИСЬ','ЗАБАСТОВКА ТЕАТРОВ','РЕМОНТ ДОРОГ','БЮДЖЕТ УРЕЗАЛИ','ДАЛЬШЕ НЕКУДА'];
+  const WHY=[null,
+    'Пока всё просто: уехал за край карты — выехал с другой стороны. Наслаждайтесь, это ненадолго.',
+    'Визы кончились у всех одновременно. Края карты превратились в стену — ездим только внутри. Этот уровень длинный: 20 городов.',
+    'Аренда подорожала втрое. Сняли площадку поменьше — поле сузилось на клетку с каждой стороны.',
+    'Театры бастуют, крайние залы закрыты. Поле ещё на клетку уже.',
+    'Ремонт дорог: перекрыли все объезды по краям. Ещё минус клетка.',
+    'Бюджет урезали. Играем в фойе — поле совсем маленькое.',
+    'Сужать дальше некуда. Просто держитесь — вы уже легенда гастролей.'];
+  const lvName=L=>LEVELS[Math.min(L,LEVELS.length-1)], lvWhy=L=>WHY[Math.min(L,WHY.length-1)];
+  const levelFor=sc=>sc<10?1:sc<30?2:3+Math.floor((sc-30)/10);
+  const insetFor=L=>L<3?0:Math.min(4,L-2);
+  let card=null; // экран перехода на уровень: {level, cd} — cd: время обратного отсчёта, мс
+  // внутренние стены уровня (сетка 15×20)
+  // поле сужается: стена-кольцо толщиной k клеток по краю
+  function layout(L){ const k=insetFor(L),o=[]; if(!k) return o; for(let y=0;y<R;y++)for(let x=0;x<C;x++) if(x<k||y<k||x>=C-k||y>=R-k) o.push({x,y,solid:false}); return o; }
+  const isFixed=(x,y)=>fixed.some(f=>f.x===x&&f.y===y);
+  const LIFE=6, WARN=8; // граница живёт 6 городов; первые 8 шагов только мигает и не мешает
+  const key=(x,y)=>y*C+x, inB=(x,y)=>x>=0&&y>=0&&x<C&&y<R;
+  const wrap=()=>border!=='solid';
+  const nb=(x,y)=>{ if(wrap()) return {x:(x+C)%C,y:(y+R)%R}; return inB(x,y)?{x,y}:null; };
+  const say=(t)=>{banner=t;bannerT=2600};
+  const isWall=(x,y,solidOnly)=>walls.some(w=>w.x===x&&w.y===y&&(!solidOnly||w.solid))||fixed.some(f=>f.x===x&&f.y===y&&(!solidOnly||f.solid));
+  const onSnake=(x,y)=>snake.some(p=>p.x===x&&p.y===y);
+  // сколько клеток доступно голове (хвост освобождается по ходу — последние 3 звена считаем свободными)
+  function reach(extra){ const block=new Set(walls.map(w=>key(w.x,w.y)).concat(fixed.map(f=>key(f.x,f.y)))); snake.slice(1,Math.max(1,snake.length-3)).forEach(p=>block.add(key(p.x,p.y))); if(extra)block.add(key(extra.x,extra.y));
+    const h=snake[0],seen=new Set([key(h.x,h.y)]),st=[h];while(st.length){const c=st.pop();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const n=nb(c.x+dx,c.y+dy);if(!n)continue;const k=key(n.x,n.y);if(!block.has(k)&&!seen.has(k)){seen.add(k);st.push(n)}}}
+    return {seen,total:C*R-block.size}; }
+  function freeCells(){ const o=[];for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(!onSnake(x,y)&&!isWall(x,y)&&!(food&&food.x===x&&food.y===y)&&!(bonus&&bonus.x===x&&bonus.y===y))o.push({x,y});return o.sort(()=>Math.random()-.5) }
+  function openSides(x,y){ let n=0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const c=nb(x+dx,y+dy);if(c&&!isWall(c.x,c.y))n++}return n }
+  function placeFood(){ const r=reach();
+    for(const c of freeCells()){ if(r.seen.has(key(c.x,c.y))&&openSides(c.x,c.y)>=3&&Math.abs(c.x-snake[0].x)+Math.abs(c.y-snake[0].y)>2) return c }
+    for(const c of freeCells()) if(r.seen.has(key(c.x,c.y))) return c;
+    return freeCells()[0]||{x:0,y:0}; }
+  function placeWall(){ const h=snake[0];
+    for(const c of freeCells()){
+      { const k=insetFor(level); if(c.x<=k||c.y<=k||c.x>=C-1-k||c.y>=R-1-k) continue; }   // не у края поля: там получаются тупики
+      if(Math.abs(c.x-h.x)+Math.abs(c.y-h.y)<5) continue;                    // не рядом с головой
+      const ax=(c.x-h.x)*dir.x+(c.y-h.y)*dir.y, lat=Math.abs((c.x-h.x)*dir.y-(c.y-h.y)*dir.x);
+      if(ax>0&&ax<=8&&lat<=1) continue;                                      // не на пути впереди
+      let near=false;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const x=c.x+dx,y=c.y+dy;if(isWall(x,y)||onSnake(x,y)||(food&&food.x===x&&food.y===y))near=true}
+      if(near||(bonus&&Math.abs(c.x-bonus.x)<=1&&Math.abs(c.y-bonus.y)<=1)) continue; // не вплотную к стенам, змейке, городу и бонусу
+      const r=reach(c); if(!r.seen.has(key(food.x,food.y))||r.seen.size<r.total*0.92) continue; // не отрезает кусок поля и город
+      return c; }
+    return null; }
+  function start(){ snake=[{x:7,y:12,n:'Спектакль'},{x:7,y:13,n:CREW[0]},{x:7,y:14,n:CREW[1]},{x:7,y:15,n:CREW[2]}]; dir={x:0,y:-1}; nd=dir; q=[]; walls=[]; ci=0; score=0; steps=0; border='open'; borderAt=0; bonus=null; bonusN=0; grow=0; level=1; fixed=[]; card={level:1,cd:0}; food=null; food={...placeFood(),c:CITIES[0]}; tick=190; acc=0; run=true; paused=false; lastT=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); }
   function pause(){ if(run){ run=false; paused=true; draw(); g.fillStyle='rgba(234,242,248,.9)'; g.fillRect(W/2-150,H/2-60,300,110); txt('ПАУЗА',W/2,H/2-6,40,'center',500); txt('нажмите или стрелку',W/2,H/2+28,16,'center'); } }
   function resume(){ if(paused){ paused=false; run=true; lastT=0; Music.start(150); raf=requestAnimationFrame(loop); return true; } return false; }
+  function checkLevel(){
+    const nl=levelFor(score);
+    if(nl>level){ level=nl; Music.sfx('special');
+      if(border==='open'){ border='warn'; borderAt=steps-WARN; }
+      if(level>=3){ fixed=layout(level); fixed.forEach(f=>f.born=steps-WARN);
+        walls=walls.filter(w=>{const k=insetFor(level);return w.x>k&&w.y>k&&w.x<C-1-k&&w.y<R-1-k});   // временные границы у новой стены убираем
+        if(isFixed(food.x,food.y)) food={...placeFood(),c:food.c};
+        if(bonus&&isFixed(bonus.x,bonus.y)) bonus=null; }
+      card={level,cd:0}; q=[]; }
+    const n=Math.floor(score/BONUS_EVERY); if(n>bonusN){ bonusN=n; const r=reach(); const c=freeCells().find(c=>r.seen.has(key(c.x,c.y))&&openSides(c.x,c.y)>=3&&Math.abs(c.x-snake[0].x)+Math.abs(c.y-snake[0].y)>4); if(c){ bonus={...c,t:BONUS_MS}; say('БОНУС! СОЛД-АУТ НА 20 СЕКУНД'); } }
+  }
   function step(){
-    if(nd.x!==-dir.x||nd.y!==-dir.y) dir=nd;
-    const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y,n:'Спектакль'};
-    const hitW=walls.find(w=>w.x===h.x&&w.y===h.y);
-    if(h.x<0||h.y<0||h.x>=C||h.y>=R) return die('Спектакль выехал за край карты');
+    steps++; const nx=q.shift(); if(nx&&(nx.x!==-dir.x||nx.y!==-dir.y)) dir=nx;
+    if(border==='warn'&&steps>=borderAt+WARN){ const h=snake[0]; const nearEdge=(h.x===0&&dir.x<0)||(h.x===C-1&&dir.x>0)||(h.y===0&&dir.y<0)||(h.y===R-1&&dir.y>0); const crossing=snake.some((p,i)=>i>0&&(Math.abs(p.x-snake[i-1].x)>1||Math.abs(p.y-snake[i-1].y)>1)); if(!nearEdge&&!crossing) border='solid'; }
+    fixed.forEach(f=>{ if(f.solid||steps<f.born+WARN) return; const h=snake[0];
+      const ax=(f.x-h.x)*dir.x+(f.y-h.y)*dir.y, lat=Math.abs((f.x-h.x)*dir.y-(f.y-h.y)*dir.x);
+      if(onSnake(f.x,f.y)||(ax>=0&&ax<=3&&lat===0)||(food.x===f.x&&food.y===f.y)) return; f.solid=true; });
+    walls.forEach(w=>{ if(w.solid||steps<w.born+WARN) return; const h=snake[0];
+      const ax=(w.x-h.x)*dir.x+(w.y-h.y)*dir.y, lat=Math.abs((w.x-h.x)*dir.y-(w.y-h.y)*dir.x);
+      if(onSnake(w.x,w.y)||(ax>=0&&ax<=3&&lat===0)) return;   // не захлопываем прямо перед носом и под змейкой
+      w.solid=true; });
+    let h={x:snake[0].x+dir.x,y:snake[0].y+dir.y,n:'Спектакль'};
+    if(!inB(h.x,h.y)&&wrap()){ h.x=(h.x+C)%C; h.y=(h.y+R)%R; }
+    const hitW=walls.find(w=>w.solid&&w.x===h.x&&w.y===h.y)||(fixed.some(f=>f.solid&&f.x===h.x&&f.y===h.y)?{t:'СТЕНУ УРОВНЯ '+level}:null);
+    if(h.x<0||h.y<0||h.x>=C||h.y>=R) return die('Спектакль упёрся в закрытую границу');
     if(hitW) return die(`Спектакль упёрся в «${hitW.t.toLowerCase()}»`);
     if(snake.some(s=>s.x===h.x&&s.y===h.y)) return die('Спектакль наехал сам на себя. Так бывает в турне');
     snake.unshift(h);
+    if(bonus&&h.x===bonus.x&&h.y===bonus.y){ bonus=null; score+=3; grow+=3; Music.sfx('point'); say('СОЛД-АУТ! +3 ГОРОДА'); checkLevel(); }
     if(h.x===food.x&&h.y===food.y){ score++; Music.sfx('eat');
-      ci++; food={...free(),c:CITIES[ci%CITIES.length]}; walls.push({...free(),t:BORDERS[Math.floor(Math.random()*BORDERS.length)]}); tick=Math.max(85,tick-7); Music.tempo(150+score*4); }
-    else snake.pop();
+      ci++; walls=walls.filter(w=>score-w.city<LIFE);                       // старые границы открываются
+      food={...placeFood(),c:CITIES[ci%CITIES.length]};
+      const maxW=Math.min(2+Math.floor(score/2),7);
+      if(walls.length<maxW){ const c=placeWall(); if(c) walls.push({...c,t:BORDERS[Math.floor(Math.random()*BORDERS.length)],city:score,born:steps,solid:false}); }
+      tick=Math.max(95,tick-6); Music.tempo(150+score*4); checkLevel(); }
+    else if(grow>0) grow--; else snake.pop();
     // relabel body with crew
     snake.forEach((s,i)=>{ if(i>0) s.n=CREW[(i-1)%CREW.length]; });
   }
   function die(why){ run=false; draw(); g.fillStyle='rgba(234,242,248,.92)'; g.fillRect(40,H/2-70,W-80,120); txt('GAME OVER',W/2,H/2-14,44,'center',500); txt(`Городов: ${score}`,W/2,H/2+22,18,'center');
     gameOver(`Городов в туре: ${score}`,`${why}. Последний город — ${CITIES[(ci)%CITIES.length][0]}.`,`Мой спектакль объехал ${score} городов в «Змейке гастролей». Сможешь больше?`,null,score); }
-  function loop(t){ if(!run) return; const dt=lastT?Math.min(100,t-lastT):16; lastT=t; acc+=dt; while(acc>=tick&&run){ acc-=tick; step(); } if(run) draw(); raf=requestAnimationFrame(loop); }
+  function loop(t){ if(!run) return; const dt=lastT?Math.min(100,t-lastT):16; lastT=t;
+    if(card){ if(card.cd>0){ card.cd-=dt; if(card.cd<=0){ card=null; acc=0; } } draw(); raf=requestAnimationFrame(loop); return; }
+    acc+=dt; if(bonus){ bonus.t-=dt; if(bonus.t<=0) bonus=null; } if(bannerT>0) bannerT-=dt; while(acc>=tick&&run&&!card){ acc-=tick; step(); } if(run) draw(); raf=requestAnimationFrame(loop); }
   function txt(s,x,y,size,al='left',w=400,c='#07141f'){ g.fillStyle=c; g.font=`${w} ${size}px Helvetica Neue,Helvetica,Arial`; g.textAlign=al; g.fillText(s,x,y); g.textAlign='left'; }
   function draw(){
     const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#a3d2f2'); bg.addColorStop(1,'#4b8fd6'); g.fillStyle=bg; g.fillRect(0,0,W,H);
     g.strokeStyle='rgba(7,20,31,.08)'; g.lineWidth=1; for(let x=0;x<=C;x++){g.beginPath();g.moveTo(x*Z,60);g.lineTo(x*Z,H);g.stroke()} for(let y=0;y<=R;y++){g.beginPath();g.moveTo(0,60+y*Z);g.lineTo(W,60+y*Z);g.stroke()}
     g.fillStyle='#07141f'; g.fillRect(0,58,W,2);
-    txt(`ГОРОДОВ: ${score}`,16,38,20,'left',500); const nc=food.c; txt(`СЛЕДУЮЩИЙ: ${nc[0].toUpperCase()}${nc[1]?' · '+nc[1]:''}`,W-16,38,18,'right',500);
+    // рамка поля: пунктир — края открыты, мигает — закрываются, сплошная — стена
+    if(border==='open'){ g.save(); g.strokeStyle='rgba(234,242,248,.9)'; g.lineWidth=3; g.setLineDash([10,10]); g.strokeRect(2,62,W-4,H-64); g.restore(); }
+    else if(border==='solid'||Math.floor(performance.now()/150)%2){ g.fillStyle=border==='solid'?'#07141f':'rgba(7,20,31,.45)'; g.fillRect(0,60,W,7); g.fillRect(0,H-7,W,7); g.fillRect(0,60,7,H-60); g.fillRect(W-7,60,7,H-60); }
+    // стены уровня
+    fixed.forEach(f=>{ if(!f.solid){ if(Math.floor(performance.now()/150)%2) return; g.globalAlpha=.4; }
+      const x=f.x*Z,y=60+f.y*Z; g.fillStyle='#0f2a44'; g.fillRect(x,y,Z,Z); g.strokeStyle='rgba(234,242,248,.25)'; g.lineWidth=1;
+      g.beginPath(); for(let k=-Z;k<Z;k+=10){ g.moveTo(x+k,y+Z); g.lineTo(x+k+Z,y); } g.save(); g.rect(x,y,Z,Z); g.clip(); g.stroke(); g.restore(); g.globalAlpha=1; });
+    // бонус «СОЛД-АУТ»
+    if(bonus){ const bx=bonus.x*Z, by=60+bonus.y*Z, pul=1+0.08*Math.sin(performance.now()/120);
+      g.save(); g.translate(bx+Z/2,by+Z/2); g.scale(pul,pul); g.fillStyle='#e9c24a'; g.fillRect(-Z/2+1,-Z/2+5,Z-2,Z-10); g.strokeStyle='#07141f'; g.lineWidth=2; g.strokeRect(-Z/2+1,-Z/2+5,Z-2,Z-10);
+      g.fillStyle='#07141f'; g.font='800 8px Helvetica Neue,Arial'; g.textAlign='center'; g.fillText('SOLD',0,-1); g.fillText('OUT',0,8); g.restore();
+      const fr=Math.max(0,bonus.t/BONUS_MS); g.fillStyle='#07141f'; g.fillRect(bx,by-6,Z,4); g.fillStyle='#e9c24a'; g.fillRect(bx,by-6,Z*fr,4); g.textAlign='left'; }
+    txt(`ГОРОДОВ: ${score}`,16,32,20,'left',500); txt(`УРОВЕНЬ ${level} · ${lvName(level)}`,16,52,11,'left',600,'rgba(7,20,31,.65)'); const nc=food.c; txt(`СЛЕДУЮЩИЙ: ${nc[0].toUpperCase()}${nc[1]?' · '+nc[1]:''}`,W-16,38,18,'right',500);
     // walls
-    walls.forEach(w=>{ g.fillStyle='#07141f'; g.fillRect(w.x*Z+2,60+w.y*Z+2,Z-4,Z-4); g.font='600 8px Helvetica Neue,Arial'; g.fillStyle='#eaf2f8'; g.textAlign='center'; g.fillText(w.t,w.x*Z+Z/2,60+w.y*Z+Z/2+3); g.textAlign='left'; });
+    walls.forEach(w=>{ if(!w.solid){ if(Math.floor(performance.now()/120)%2) return; g.globalAlpha=.45; } else if(score-w.city>=LIFE-1) g.globalAlpha=.55; g.fillStyle='#07141f'; g.fillRect(w.x*Z+2,60+w.y*Z+2,Z-4,Z-4); g.font='600 8px Helvetica Neue,Arial'; g.fillStyle='#eaf2f8'; g.textAlign='center'; g.fillText(w.t,w.x*Z+Z/2,60+w.y*Z+Z/2+3); g.textAlign='left'; g.globalAlpha=1; });
     // food = city pin
     const fx=food.x*Z+Z/2, fy=60+food.y*Z+Z/2; g.fillStyle='#8a1426'; g.beginPath(); g.arc(fx,fy-4,12,0,7); g.fill(); g.beginPath(); g.moveTo(fx-9,fy+2); g.lineTo(fx+9,fy+2); g.lineTo(fx,fy+16); g.fill(); g.fillStyle='#eaf2f8'; g.beginPath(); g.arc(fx,fy-4,4,0,7); g.fill();
     g.font='500 13px Helvetica Neue,Arial'; const lw=g.measureText(food.c[0]).width+10; let lx=Math.max(2,Math.min(W-lw-2,fx-lw/2)); g.fillStyle='#07141f'; g.fillRect(lx,fy-38,lw,18); txt(food.c[0],lx+5,fy-24,13,'left',500,'#eaf2f8');
@@ -181,14 +266,37 @@ const Game=(()=>{
       if(i===0){ g.fillStyle='#07141f'; g.fillRect(x+1,y+1,Z-2,Z-2); g.fillStyle='#eaf2f8'; g.fillRect(x+6,y+8,Z-12,10); g.fillStyle='#07141f'; g.font='700 9px Helvetica Neue,Arial'; g.textAlign='center'; g.fillText('ТУР',x+Z/2,y+16); g.fillStyle='#e9c24a'; g.beginPath(); g.arc(x+10,y+Z-7,4,0,7); g.arc(x+Z-10,y+Z-7,4,0,7); g.fill(); g.textAlign='left'; }
       else { g.fillStyle=i%2?'#eaf2f8':'#cfe3f5'; g.fillRect(x+3,y+3,Z-6,Z-6); g.strokeStyle='#07141f'; g.lineWidth=2; g.strokeRect(x+3,y+3,Z-6,Z-6); g.fillStyle='#07141f'; g.textAlign='center'; let nm=s.n||''; let fs=9; g.font=`600 ${fs}px Helvetica Neue,Arial`; while(g.measureText(nm).width>Z-8&&fs>6){fs-=.5; g.font=`600 ${fs}px Helvetica Neue,Arial`;} if(g.measureText(nm).width>Z-8) nm=nm.slice(0,6)+'.'; g.fillText(nm,x+Z/2,y+Z/2+3); g.textAlign='left'; }
     });
+    if(card){ drawCard(); return; }
+    if(bannerT>0){ g.globalAlpha=Math.min(1,bannerT/400); g.fillStyle='rgba(7,20,31,.88)'; g.fillRect(0,67,W,48); txt(banner,W/2,99,20,'center',600,'#eaf2f8'); g.globalAlpha=1; }
   }
-  const set=(x,y)=>{ if(resume()) return; nd={x,y}; };
-  document.addEventListener('keydown',e=>{ const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(m){ e.preventDefault(); set(...m); } });
-  let sx,sy; cv.addEventListener('pointerdown',e=>{ if(resume()) return; sx=e.clientX; sy=e.clientY; });
+  function wrapText(t,maxW,size){ g.font=`500 ${size}px Helvetica Neue,Arial`; const words=t.split(' '),lines=[];let cur='';for(const w of words){const tt=cur?cur+' '+w:w;if(g.measureText(tt).width>maxW&&cur){lines.push(cur);cur=w}else cur=tt}if(cur)lines.push(cur);return lines }
+  function drawCard(){
+    g.fillStyle='rgba(7,20,31,.6)'; g.fillRect(0,60,W,H-60);
+    const L=card.level, bx=36, bw=W-72, by=100, bh=640;
+    g.fillStyle='#eaf2f8'; g.fillRect(bx,by,bw,bh); g.strokeStyle='#07141f'; g.lineWidth=4; g.strokeRect(bx,by,bw,bh);
+    txt(`УРОВЕНЬ ${L}`,W/2,by+72,54,'center',500);
+    txt(lvName(L),W/2,by+114,24,'center',700,'#8a1426');
+    const lines=wrapText(lvWhy(L),bw-60,20); lines.forEach((ln,i)=>txt(ln,W/2,by+164+i*29,20,'center',400));
+    // схема уровня: стены, змейка (голова красная) и город — видно, куда ехать
+    const mz=12,mw=C*mz,mh=R*mz,mx=W/2-mw/2,my=by+178+lines.length*29;
+    g.fillStyle='#a3d2f2'; g.fillRect(mx,my,mw,mh);
+    g.strokeStyle='#07141f'; if(L<2){ g.lineWidth=2; g.setLineDash([5,5]); } else g.lineWidth=5; g.strokeRect(mx,my,mw,mh); g.setLineDash([]);
+    g.fillStyle='#0f2a44'; layout(L).forEach(c=>g.fillRect(mx+c.x*mz,my+c.y*mz,mz,mz));
+    g.fillStyle='rgba(7,20,31,.45)'; walls.forEach(w=>g.fillRect(mx+w.x*mz+2,my+w.y*mz+2,mz-4,mz-4));
+    snake.forEach((p,i)=>{ g.fillStyle=i?'#eaf2f8':'#8a1426'; g.fillRect(mx+p.x*mz+1,my+p.y*mz+1,mz-2,mz-2); if(i){g.strokeStyle='#07141f';g.lineWidth=1;g.strokeRect(mx+p.x*mz+1.5,my+p.y*mz+1.5,mz-3,mz-3)} });
+    g.fillStyle='#8a1426'; g.beginPath(); g.arc(mx+food.x*mz+mz/2,my+food.y*mz+mz/2,mz/2-1,0,7); g.fill();
+    const py=my+mh+46;
+    if(card.cd>0){ const n=Math.ceil(card.cd/500); txt(String(n),W/2,py+8,48,'center',600,'#8a1426'); }
+    else if(Math.floor(performance.now()/450)%2===0) txt('Нажми или стрелку — поехали',W/2,py,20,'center',600);
+  }
+  function go(){ if(card&&card.cd<=0){ card.cd=1500; Music.sfx('hit'); return true } return !!card; }
+  const set=(x,y)=>{ if(resume()) return; if(go()) return; const last=q.length?q[q.length-1]:dir; if((x===last.x&&y===last.y)||(x===-last.x&&y===-last.y)) return; if(q.length<2) q.push({x,y}); };
+  document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&run&&card){ e.preventDefault(); go(); return; } const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(m){ e.preventDefault(); set(...m); } });
+  let sx,sy; cv.addEventListener('pointerdown',e=>{ if(resume()) return; if(go()){ sx=null; return; } sx=e.clientX; sy=e.clientY; });
   cv.addEventListener('pointerup',e=>{ if(sx==null) return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; if(Math.max(Math.abs(dx),Math.abs(dy))<20) return; if(Math.abs(dx)>Math.abs(dy)) set(dx>0?1:-1,0); else set(0,dy>0?1:-1); });
   document.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('pointerdown',e=>{ e.preventDefault(); const m={U:[0,-1],D:[0,1],L:[-1,0],R:[1,0]}[b.dataset.d]; set(...m); }));
   snake=[{x:7,y:12,n:'Спектакль'},{x:7,y:13,n:'Чулпан'},{x:7,y:14,n:'Машкова'},{x:7,y:15,n:'Зоркий'}]; walls=[]; food={x:7,y:5,c:CITIES[0]}; score=0; draw();
-  return {start,pause};
+  return {start,pause,_s:()=>({snake,food,walls,dir,C,R,score,border,bonus,level,fixed,card,_set:(o)=>{if(o.score!=null){score=o.score;checkLevel()}}})};
 })();
 
 </script>
