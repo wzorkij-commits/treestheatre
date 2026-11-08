@@ -663,7 +663,7 @@ c-83 0 -108 -7 -147 -43 -30 -26 -31 -82 -4 -97 27 -14 436 -13 462 1 56 29
 </svg></svg></div>
     <h2>Чемодан эмигранта</h2>
     <div class="how">Заполнил ряд целиком — вещи исчезают: ты их отпустил. Больше 10 кг — доплата за перевес. Игра кончается, когда вещам некуда падать. Чем дальше, тем страннее просьбы.</div>
-    <div class="startbox"><ul><li>← → двигать вещь, ⟳ повернуть, ⤓ бросить</li><li>На телефоне: свайп в сторону — сдвинуть, тап — повернуть, свайп вниз — бросить</li><li>Собрал ряд — он исчезает</li></ul><button class="startbtn" data-start="suitcase">Начать игру</button><div class="row links"><a class="btn primary" href="index.html#tour">Купить билет на спектакль</a><a class="btn" href="index.html">Зайти на сайт</a><button class="btn" data-sharegame="suitcase">Поделиться игрой</button></div></div>
+    <div class="startbox"><ul><li>← → двигать вещь, ⟳ повернуть, ⤓ бросить</li><li>На телефоне: свайп в сторону — сдвинуть, тап — повернуть, свайп вниз — бросить</li><li>Собрал ряд — он исчезает. Очки как в тетрисе: 1 ряд — 100, 2 — 300, 3 — 500, 4 сразу — 800. Каждые 10 рядов множитель растёт. Бросок вниз — +2 за клетку</li></ul><button class="startbtn" data-start="suitcase">Начать игру</button><div class="row links"><a class="btn primary" href="index.html#tour">Купить билет на спектакль</a><a class="btn" href="index.html">Зайти на сайт</a><button class="btn" data-sharegame="suitcase">Поделиться игрой</button></div></div>
     <div class="game">
     <div class="now"><span><span class="lbl" id="nowlbl">Сейчас падает</span><br><span class="name" id="nowname">—</span></span><span class="kgx" style="text-align:right"><span id="nowkg"></span><br><b id="kg2" style="font-weight:500"></b></span></div>
     <div class="suitrow">
@@ -994,7 +994,8 @@ const S = (() => {
     const w=Math.max(...cells.map(c=>c[0]))-mx+1, h=Math.max(...cells.map(c=>c[1]))-my+1;
     if(w>6) return s;
     const out=Array.from({length:h},()=>Array(w).fill(0)); cells.forEach(([x,y])=>out[y-my][x-mx]=1); return out; }
-  let grid,piece,nextP,timer,alive,speed,lines,logs,toast,toastT,paused=false;
+  let grid,piece,nextP,timer,alive,speed,lines,logs,toast,toastT,paused=false,score=0,mult=1;
+  const LINEPTS=[0,100,300,500,800];   // как в классическом тетрисе: 1, 2, 3, 4 ряда
   const isBig=it=>(it.t||1)>=2;
   let usedBig=new Set(), bigOnly=false;
   function rnd(){
@@ -1011,7 +1012,7 @@ const S = (() => {
     return o; }
   function cellsOf(it){ return it.s.flat().filter(Boolean).length; }
   function weight(){ let w=0; grid.forEach(r=>r.forEach(v=>{ if(v) w+=v.kg; })); return w; }
-  function start(){ psyOff(); usedBig=new Set(); bigOnly=false; paused=false; placed=0; tier=1; grid=Array.from({length:RW},()=>Array(C).fill(null)); alive=true; speed=700; lines=0; logs=[]; toast=null;
+  function start(){ psyOff(); usedBig=new Set(); bigOnly=false; paused=false; placed=0; tier=1; grid=Array.from({length:RW},()=>Array(C).fill(null)); alive=true; speed=700; lines=0; score=0; mult=1; logs=[]; toast=null;
     nextP=rnd(); spawn(); $('#sover').innerHTML=''; stop(); timer=setInterval(tick,speed); ui(); render(); }
   function stop(){ clearInterval(timer); timer=null; }
   function pause(){ if(alive&&timer){ stop(); paused=true; render(); } }
@@ -1032,7 +1033,8 @@ const S = (() => {
     piece.s.pop(); piece.y+=1;
     if(!piece.s.length){ logs.unshift('— «ДАУ» закончился. Никто не досмотрел'); placed++; spawn(); ui(); }
     render(); }
-  function drop(){ if(!alive) return; while(move(0,1)); if(piece.dau) return; lock(); }
+  function soft(){ if(move(0,1)){ score+=1; ui(); } }   // ускоренное падение: +1 за клетку
+  function drop(){ if(!alive) return; let n=0; while(move(0,1)) n++; score+=2*n; if(piece.dau) return; lock(); }   // бросок: +2 за клетку
   function tick(){ if(!alive) return; if(!move(0,1)){ if(piece.dau) dauStep(); else lock(); } }
   function lock(){
     const per=piece.kg/cellsOf(piece);
@@ -1051,10 +1053,12 @@ const S = (() => {
     if(full.length){
       const names=new Set(); full.forEach(y=>grid[y].forEach(v=>names.add(v.n)));
       full.reverse().forEach(y=>{ grid.splice(y,1); }); for(let k=0;k<full.length;k++) grid.unshift(Array(C).fill(null));
-      lines+=full.length; const verb=LET[Math.floor(Math.random()*LET.length)];
+      const n=full.length, pts=(LINEPTS[Math.min(4,n)]+Math.max(0,n-4)*400)*mult; score+=pts; lines+=n;
+      const verb=LET[Math.floor(Math.random()*LET.length)];
       const list=[...names].map(n=>n.split(/[(:]/)[0].trim()).slice(0,4).join(', ').toLowerCase();
-      toast={big:verb.toUpperCase(), small:list}; toastT=Date.now(); Music.sfx('line');
-      logs.unshift('— '+verb+': '+list);
+      toast={big:n>=4?'ТЕТРИС! +'+pts:verb.toUpperCase(), small:(n>=4?verb.toLowerCase()+': ':'+'+pts+' · ')+list}; toastT=Date.now(); Music.sfx('line');
+      logs.unshift('— '+(n>=4?'ТЕТРИС! ':'')+verb+': '+list+' (+'+pts+')');
+      const nm=1+Math.floor(lines/10); if(nm>mult){ mult=nm; setTimeout(()=>{ toast={big:'МНОЖИТЕЛЬ ×'+mult, small:'очки за ряды теперь умножаются на '+mult}; toastT=Date.now(); },1300); }
       if(speed>260){ speed-=50; stop(); timer=setInterval(tick,speed); }
     }
     spawn(); ui(); render();
@@ -1088,7 +1092,7 @@ const S = (() => {
     const w=weight().toFixed(1).replace('.',',');
     const over=weight()-10; const head='Чемодан не закрывается';
     const sub = over>0 ? `Вес ${w} кг. Перевес ${over.toFixed(1).replace('.',',')} кг — доплата на стойке ${Math.ceil(over)*15} €.` : `Вес ${w} кг — в лимит уложились, но вещам больше некуда падать.`;
-    gameOver($('#sover'),'suitcase',`Отпущено рядов: ${lines}`,head,`${sub} ${verdict()}`,`Собрал чемодан эмигранта: отпустил ${lines} рядов прошлого. ${verdict()} Попробуй уложить свой:`,lines);
+    gameOver($('#sover'),'suitcase',`Очки: ${score.toLocaleString('ru-RU')} · рядов: ${lines}`,head,`${sub} ${verdict()}`,`Собрал чемодан эмигранта на ${score.toLocaleString('ru-RU')} очков и отпустил ${lines} рядов прошлого. ${verdict()} Попробуй уложить свой:`,score);
   }
   function ui(){
     const w=weight(); $('#kg').textContent=w.toFixed(1).replace('.',',')+' кг'; $('#kg').style.color=w>8?'#8a1426':'';
@@ -1125,11 +1129,13 @@ const S = (() => {
     if(piece&&alive){ let gy=piece.y; while(fits(piece.s,piece.x,gy+1)) gy++;
       g.globalAlpha=.22; piece.s.forEach((r,ri)=>r.forEach((v,ci)=>{ if(v) cell(piece.x+ci,gy+ri,piece.c); })); g.globalAlpha=1;
       piece.s.forEach((r,ri)=>r.forEach((v,ci)=>{ if(v&&(!piece.blink||bl)) cell(piece.x+ci,piece.y+ri,piece.blink?BLC:piece.c); })); }
+    if(grid){ g.fillStyle='#07141f'; g.font='700 12px Helvetica Neue, Arial'; g.fillText('ОЧКИ',8,13); g.font='700 25px Helvetica Neue, Arial'; g.fillText(score.toLocaleString('ru-RU'),8,38);
+      g.textAlign='right'; g.font='700 12px Helvetica Neue, Arial'; g.fillText('РЯДЫ · МНОЖ.',cv.width-8,13); g.font='700 25px Helvetica Neue, Arial'; g.fillText(lines+' · ×'+mult,cv.width-8,38); g.textAlign='left'; }
     if(!alive&&grid){ g.fillStyle='rgba(7,20,31,.9)'; g.fillRect(OX-6,OY+RW*Z/2-50,C*Z+12,100); g.fillStyle='#eaf2f8'; g.textAlign='center'; g.font='500 40px Helvetica Neue, Arial'; g.fillText('GAME OVER',OX+C*Z/2,OY+RW*Z/2+14); g.textAlign='left'; }
     else if(paused){ g.fillStyle='rgba(7,20,31,.88)'; g.fillRect(OX-6,OY+RW*Z/2-50,C*Z+12,100); g.fillStyle='#eaf2f8'; g.textAlign='center'; g.font='500 30px Helvetica Neue, Arial'; g.fillText('ПАУЗА',OX+C*Z/2,OY+RW*Z/2-6); g.font='400 14px Helvetica Neue, Arial'; g.fillText('нажми, чтобы продолжить',OX+C*Z/2,OY+RW*Z/2+22); g.textAlign='left'; }
     else if(toast && Date.now()-toastT<1800){
       g.fillStyle='rgba(7,20,31,.88)'; g.fillRect(OX-6,OY+RW*Z/2-56,C*Z+12,112);
-      g.fillStyle='#eaf2f8'; g.textAlign='center'; g.font='500 26px Helvetica Neue, Arial'; g.fillText(toast.big,OX+C*Z/2,OY+RW*Z/2-14);
+      g.fillStyle='#eaf2f8'; g.textAlign='center'; let tfs=26; g.font=`500 ${tfs}px Helvetica Neue, Arial`; while(g.measureText(toast.big).width>C*Z-6&&tfs>14){ tfs--; g.font=`500 ${tfs}px Helvetica Neue, Arial`; } g.fillText(toast.big,OX+C*Z/2,OY+RW*Z/2-14);
       g.font='400 14px Helvetica Neue, Arial'; wrapText(toast.small,OX+C*Z/2,OY+RW*Z/2+14,C*Z-10,18); g.textAlign='left';
     }
   }
@@ -1137,7 +1143,7 @@ const S = (() => {
   setInterval(()=>{ if(current==='suitcase'&&grid&&(toast||(piece&&piece.blink)||grid.some(r=>r.some(v=>v&&v.blink)))) render(); },110);
   document.addEventListener('keydown',e=>{ if(current!=='suitcase'||!alive) return; const k=e.key; if(resume()){ e.preventDefault(); return; }
     if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(k)) e.preventDefault();
-    if(k==='ArrowLeft') move(-1,0); if(k==='ArrowRight') move(1,0); if(k==='ArrowUp') turn(); if(k==='ArrowDown') move(0,1); if(k===' ') drop(); });
+    if(k==='ArrowLeft') move(-1,0); if(k==='ArrowRight') move(1,0); if(k==='ArrowUp') turn(); if(k==='ArrowDown') soft(); if(k===' ') drop(); });
   document.querySelectorAll('.pad button').forEach(b=>b.addEventListener('click',()=>{ if(resume()) return; const k=b.dataset.k; if(k==='L')move(-1,0); if(k==='R')move(1,0); if(k==='U')turn(); if(k==='D')drop(); }));
   let sx=null,sy=null;
   cv.addEventListener('pointerdown',e=>{ if(resume()){ sx=null; return; } sx=e.clientX;sy=e.clientY;});
@@ -1323,7 +1329,7 @@ const h0=location.hash.replace('#',''); if(screens.includes(h0)&&h0!=='home') go
 const HS=(()=>{
   const API='/api/scores',N=10;
   const NAMES={suitcase:'Чемодан эмигранта',run:'Бегство',producer:'Продюсер в изгнании',fight:'Театральный бой',snake:'Змейка гастролей',pong:'Пинг-понг артиста'};
-  const UNIT={suitcase:'рядов',run:'км',producer:'дней',pong:'проблем',snake:'городов',fight:'очков'};
+  const UNIT={suitcase:'очков',run:'км',producer:'дней',pong:'проблем',snake:'городов',fight:'очков'};
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const lsGet=g=>{try{return JSON.parse(localStorage.getItem('trees_hs_'+g)||'[]')}catch(e){return[]}};
   const lsPut=(g,a)=>{try{localStorage.setItem('trees_hs_'+g,JSON.stringify(a.slice(0,N)))}catch(e){}};
