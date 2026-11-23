@@ -1,3 +1,7 @@
+https://trees.theater/*      https://thetallesttrees.com/:splat  301!
+http://trees.theater/*       https://thetallesttrees.com/:splat  301!
+https://www.trees.theater/*  https://thetallesttrees.com/:splat  301!
+http://www.trees.theater/*   https://thetallesttrees.com/:splat  301!
 /games      /games.html   200
 /play/*     /:splat.html  200
 /pong       /pong.html    200
